@@ -23,19 +23,19 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateToken(Long userId, String email) {
+    public String generateToken(Long userId, String email, String displayName) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .subject(email)
                 .claim("userId", userId)
+                .claim("displayName", displayName)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key())
                 .compact();
     }
-
     public Claims validateAndGetClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key())

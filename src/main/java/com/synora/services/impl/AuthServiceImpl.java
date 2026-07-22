@@ -35,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
         user.setAuthProvider(AuthProvider.LOCAL);
 
         User saved = userRepository.save(user);
-        String token = jwtTokenProvider.generateToken(saved.getId(), saved.getEmail());
+        String token = jwtTokenProvider.generateToken(saved.getId(), saved.getEmail(), saved.getDisplayName());
 
         return new AuthResponse(token, saved.getEmail(), saved.getDisplayName());
     }
@@ -47,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Invalid email or password");
         }
 
-        String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail());
+        String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getDisplayName());
         return new AuthResponse(token, user.getEmail(), user.getDisplayName());
     }
 }

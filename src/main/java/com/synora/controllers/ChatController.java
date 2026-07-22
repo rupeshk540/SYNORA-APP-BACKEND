@@ -14,6 +14,8 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
+import java.security.Principal;
+
 @Controller
 @CrossOrigin("http://localhost:5173")
 public class ChatController {
@@ -27,7 +29,8 @@ public class ChatController {
     @SendTo("/topic/room/{roomId}")
     public Message sendMessages(
             @DestinationVariable String roomId,
-            @Payload MessageRequest request
+            @Payload MessageRequest request,
+            Principal principal
     ) {
         Room room = roomService.findByRoomId(roomId);
         if (room == null) {
@@ -35,9 +38,9 @@ public class ChatController {
         }
 
         Message message = new Message();
-        message.setRoomId(roomId);          // from the destination, not the payload
+        message.setRoomId(roomId);
         message.setContent(request.getContent());
-        message.setSender(request.getSender());
+        message.setSender(principal.getName());   // from the JWT, not the request body
 
         return messageRepository.save(message);
     }
