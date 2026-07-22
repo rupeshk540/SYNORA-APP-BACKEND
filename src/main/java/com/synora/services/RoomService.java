@@ -4,7 +4,7 @@ import com.synora.entities.Room;
 
 public interface RoomService {
 
-    Room createRoom(String roomId);
+    Room createRoom(String roomId, String name);
 
     Room findByRoomId(String roomId);
 

@@ -23,6 +23,9 @@ public class Room {
     @Column(name = "room_id", unique = true, nullable = false)
     private String roomId;      // this is still the string code the frontend already uses
 
+    @Column(name = "name")
+    private String name;
+
     @Column(name = "created_at")
     private Instant createdAt;
 

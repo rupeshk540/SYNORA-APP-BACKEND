@@ -1,16 +1,17 @@
 package com.synora.controllers;
 
+import com.synora.dto.MyRoomResponse;
+import com.synora.dto.RoomRequest;
 import com.synora.entities.Message;
 import com.synora.entities.Room;
 import com.synora.repositories.MessageRepository;
+import com.synora.services.MembershipService;
 import com.synora.services.RoomService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import com.synora.services.impl.CurrentUserService;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,54 +21,60 @@ import java.util.List;
 @CrossOrigin("http://localhost:5173")
 public class RoomController {
 
-    @Autowired
-    private MessageRepository messageRepository;
-    public RoomController(RoomService roomService) {
+    private final RoomService roomService;
+    private final MessageRepository messageRepository;
+    private final MembershipService membershipService;
+    private final CurrentUserService currentUserService;
+
+    public RoomController(RoomService roomService, MessageRepository messageRepository,
+                          MembershipService membershipService, CurrentUserService currentUserService) {
         this.roomService = roomService;
+        this.messageRepository = messageRepository;
+        this.membershipService = membershipService;
+        this.currentUserService = currentUserService;
     }
 
-    private RoomService roomService;
-
-    //create room
     @PostMapping
-    public ResponseEntity<?> createRoom(@RequestBody String roomId){
-
-        //if room is already exists
-        if(roomService.findByRoomId(roomId) != null){
-            return ResponseEntity.badRequest().body("Room is already exists !!");
+    public ResponseEntity<?> createRoom(@RequestBody RoomRequest request, Authentication authentication) {
+        String roomId = request.getRoomId();
+        String name = (request.getName() == null || request.getName().isBlank()) ? roomId : request.getName();
+        if (roomService.findByRoomId(roomId) != null) {
+            return ResponseEntity.badRequest().body("Room already exists !!");
         }
-
-        //if not exists create then create
-        Room savedRoom=roomService.createRoom(roomId);
+        Room savedRoom = roomService.createRoom(roomId,name);
+        Long userId = currentUserService.getCurrentUser(authentication).getId();
+        membershipService.joinRoom(userId, roomId);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedRoom);
-
     }
 
-    //get room:Join
-    @GetMapping("/{roomId}")
-    public ResponseEntity<?> joinRoom(@PathVariable String roomId){
-        Room room = roomService.findByRoomId(roomId);
+    @GetMapping("/my-rooms")
+    public ResponseEntity<List<MyRoomResponse>> getMyRooms(Authentication authentication) {
+        Long userId = currentUserService.getCurrentUser(authentication).getId();
+        return ResponseEntity.ok(membershipService.getMyRooms(userId));
+    }
 
-        if(room==null){
+    @GetMapping("/{roomId}")
+    public ResponseEntity<?> joinRoom(@PathVariable String roomId, Authentication authentication) {
+        Room room = roomService.findByRoomId(roomId);
+        if (room == null) {
             return ResponseEntity.badRequest().body("Room not found !!");
         }
-
+        Long userId = currentUserService.getCurrentUser(authentication).getId();
+        membershipService.joinRoom(userId, roomId);
         return ResponseEntity.ok(room);
     }
 
-    //get messages of room
     @GetMapping("/{roomId}/messages")
     public ResponseEntity<List<Message>> getMessages(
             @PathVariable String roomId,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         Room room = roomService.findByRoomId(roomId);
         if (room == null) {
             return ResponseEntity.badRequest().build();
         }
-
-        Pageable pageable = (Pageable) PageRequest.of(page, size,Sort.by("timestamp").descending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
         Page<Message> messagePage = messageRepository.findByRoomIdOrderByTimestampDesc(roomId, pageable);
         return ResponseEntity.ok(messagePage.getContent());
     }

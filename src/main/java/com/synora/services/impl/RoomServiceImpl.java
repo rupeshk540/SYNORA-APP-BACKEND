@@ -13,9 +13,10 @@ public class RoomServiceImpl implements RoomService {
     private RoomRepository roomRepository;
 
     @Override
-    public Room createRoom(String roomId) {
+    public Room createRoom(String roomId, String name) {
         Room room = new Room();
         room.setRoomId(roomId);
+        room.setName(name);
         Room savedRoom = roomRepository.save(room);
         return savedRoom;
     }
