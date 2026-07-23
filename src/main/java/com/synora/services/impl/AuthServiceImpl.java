@@ -1,7 +1,7 @@
 package com.synora.services.impl;
 
 import com.synora.dto.*;
-import com.synora.entities.AuthProvider;
+import com.synora.entities.enums.AuthProvider;
 import com.synora.entities.User;
 import com.synora.repositories.UserRepository;
 import com.synora.config.JwtTokenProvider;

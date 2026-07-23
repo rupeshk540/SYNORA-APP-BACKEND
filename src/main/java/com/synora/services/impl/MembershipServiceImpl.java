@@ -1,14 +1,19 @@
 package com.synora.services.impl;
 
 import com.synora.dto.MyRoomResponse;
+import com.synora.dto.ReadReceiptUpdate;
 import com.synora.entities.Message;
 import com.synora.entities.Room;
 import com.synora.entities.RoomMembership;
+import com.synora.entities.User;
 import com.synora.repositories.MessageRepository;
 import com.synora.repositories.RoomMembershipRepository;
 import com.synora.repositories.RoomRepository;
+import com.synora.repositories.UserRepository;
 import com.synora.services.MembershipService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,6 +29,8 @@ public class MembershipServiceImpl implements MembershipService {
     @Autowired private RoomMembershipRepository membershipRepository;
     @Autowired private RoomRepository roomRepository;
     @Autowired private MessageRepository messageRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private SimpMessagingTemplate messagingTemplate;
 
     @Override
     public RoomMembership joinRoom(Long userId, String roomId) {
@@ -65,11 +72,24 @@ public class MembershipServiceImpl implements MembershipService {
                 .toList();
     }
     @Override
+    @Transactional
     public void markAsRead(Long userId, String roomId) {
         membershipRepository.findByUserIdAndRoomId(userId, roomId)
                 .ifPresent(m -> {
-                    m.setLastReadAt(Instant.now());
+                    Instant now = Instant.now();
+                    m.setLastReadAt(now);
                     membershipRepository.save(m);
+
+                    User reader = userRepository.findById(userId).orElse(null);
+                    if (reader != null) {
+                        int updated = messageRepository.markSeenUpTo(roomId, reader.getDisplayName(), now);
+                        if (updated > 0) {
+                            messagingTemplate.convertAndSend(
+                                    "/topic/room/" + roomId + "/status",
+                                    new ReadReceiptUpdate(roomId, reader.getDisplayName(), now)
+                            );
+                        }
+                    }
                 });
     }
 }

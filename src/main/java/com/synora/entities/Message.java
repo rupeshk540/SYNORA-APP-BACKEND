@@ -1,6 +1,7 @@
 package com.synora.entities;
 
 
+import com.synora.entities.enums.MessageStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -33,6 +34,10 @@ public class Message {
 
     @Column(name = "created_at")
     private Instant timestamp;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MessageStatus status = MessageStatus.SENT;
 
     @PrePersist
     protected void onCreate() {

@@ -1,4 +1,4 @@
-package com.synora.entities;
+package com.synora.entities.enums;
 
 public enum AuthProvider {
 

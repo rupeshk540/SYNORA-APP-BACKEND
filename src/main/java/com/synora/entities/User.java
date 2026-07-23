@@ -1,6 +1,6 @@
 package com.synora.entities;
 
-import com.synora.entities.AuthProvider;
+import com.synora.entities.enums.AuthProvider;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
