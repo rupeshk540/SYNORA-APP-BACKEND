@@ -4,6 +4,7 @@ package com.synora.controllers;
 import com.synora.dto.DeliveryAckRequest;
 import com.synora.dto.MessageRequest;
 import com.synora.dto.MessageStatusUpdate;
+import com.synora.dto.TypingEventDto;
 import com.synora.entities.Message;
 import com.synora.entities.Room;
 import com.synora.repositories.MessageRepository;
@@ -65,6 +66,17 @@ public class ChatController {
                     new MessageStatusUpdate(request.getMessageId(), "DELIVERED")
             );
         }
+    }
+
+    @MessageMapping("/typing/{roomId}")
+    @SendTo("/topic/room/{roomId}/typing")
+    public TypingEventDto handleTyping(
+            @DestinationVariable String roomId,
+            @Payload TypingEventDto event,
+            Principal principal
+    ) {
+        event.setSender(principal.getName()); // never trust the client for identity
+        return event;
     }
 }
 
