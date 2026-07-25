@@ -3,10 +3,14 @@ package com.synora.controllers;
 import com.synora.dto.AiFixRequest;
 import com.synora.dto.AiFixResponse;
 import com.synora.services.AiService;
+import com.synora.services.impl.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -15,6 +19,8 @@ public class AiController {
 
     @Autowired
     private AiService aiService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
     @PostMapping("/fix")
     public ResponseEntity<?> fixText(@RequestBody AiFixRequest request) {
@@ -28,4 +34,20 @@ public class AiController {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("AI service unavailable, try again");
         }
     }
+
+    @GetMapping("/summarize/{roomId}")
+    public ResponseEntity<?> summarizeRoom(
+            @PathVariable String roomId,
+            @RequestParam(required = false) String since,
+            Authentication authentication
+    ) {
+        Long userId = currentUserService.getCurrentUser(authentication).getId();
+        try {
+            Instant sinceInstant = since != null ? Instant.parse(since) : null;
+            return ResponseEntity.ok(aiService.summarizeRoom(userId, roomId, sinceInstant));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Could not generate summary, try again");
+        }
+    }
 }
+

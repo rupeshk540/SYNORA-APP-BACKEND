@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface MessageRepository extends JpaRepository<Message, Long> {
@@ -24,4 +25,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @Query("UPDATE Message m SET m.status = 'SEEN' WHERE m.roomId = :roomId " +
             "AND m.sender <> :reader AND m.timestamp <= :upTo AND m.status <> 'SEEN'")
     int markSeenUpTo(@Param("roomId") String roomId, @Param("reader") String reader, @Param("upTo") Instant upTo);
+
+    List<Message> findByRoomIdAndTimestampAfterOrderByTimestampAsc(String roomId, Instant after);
 }
