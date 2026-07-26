@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -77,5 +78,17 @@ public class RoomController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
         Page<Message> messagePage = messageRepository.findByRoomIdOrderByTimestampDesc(roomId, pageable);
         return ResponseEntity.ok(messagePage.getContent());
+    }
+
+    @GetMapping("/{roomId}/messages/since")
+    public ResponseEntity<List<Message>> getMessagesSince(
+            @PathVariable String roomId,
+            @RequestParam String after
+    ) {
+        Room room = roomService.findByRoomId(roomId);
+        if (room == null) return ResponseEntity.badRequest().build();
+
+        Instant since = Instant.parse(after);
+        return ResponseEntity.ok(messageRepository.findByRoomIdAndTimestampAfterOrderByTimestampAsc(roomId, since));
     }
 }
