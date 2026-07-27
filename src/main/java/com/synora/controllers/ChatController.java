@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import java.security.Principal;
 
 @Controller
-@CrossOrigin("http://localhost:5173")
 public class ChatController {
     @Autowired
     private RoomService roomService;

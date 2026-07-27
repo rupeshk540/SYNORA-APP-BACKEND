@@ -15,7 +15,6 @@ import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin("http://localhost:5173")
 public class AiController {
 
     @Autowired
